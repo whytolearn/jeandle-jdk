@@ -46,16 +46,36 @@ public class TestCatch {
     }
 
     static boolean testCatch() {
-        boolean catched = false;
+        int catched1 = 0;
         try {
-            justThrow();
+            justThrow1();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            catched1 = 1;
         } catch (RuntimeException e) {
-            catched = true;
+            catched1 = 2;
+        } catch (Exception e) {
+            catched1 = 3;
         }
-        return true;
+
+        int catched2 = 0;
+        try {
+            justThrow2();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            catched2 = 1;
+        } catch (RuntimeException e) {
+            catched2 = 2;
+        } catch (Exception e) {
+            catched2 = 3;
+        }
+        return catched1 == 1 && catched2 == 3;
     }
 
-    static void justThrow() throws RuntimeException {
-        throw new RuntimeException("Expected Exception");
+
+    static void justThrow1() throws ArrayIndexOutOfBoundsException {
+        throw new ArrayIndexOutOfBoundsException("Expected ArrayIndexOutOfBoundsException");
+    }
+
+    static void justThrow2() throws Exception {
+        throw new Exception("Expected Exception");
     }
 }
