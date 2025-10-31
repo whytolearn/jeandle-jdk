@@ -41,6 +41,13 @@ public class TestCatch {
         fileCheck.checkNext("landingpad i64");
         fileCheck.checkNext("cleanup");
 
+        fileCheck.check("bci_2_exception_dispatch_next:");
+        fileCheck.checkNext("hotspotcc i32 @jeandle.instanceof");
+
+        fileCheck.check("bci_2_exception_dispatch_next2:");
+        fileCheck.checkNext("call hotspotcc ptr @jeandle.current_thread()");
+        fileCheck.checkNext("call hotspotcc void @install_exceptional_return");
+
         FileCheck fileCheckOpt = new FileCheck(currentDir, TestCatch.class.getDeclaredMethod("testCatch"), true);
         fileCheckOpt.check("landingpad token");
     }
@@ -70,12 +77,16 @@ public class TestCatch {
         return catched1 == 1 && catched2 == 3;
     }
 
-
     static void justThrow1() throws ArrayIndexOutOfBoundsException {
         throw new ArrayIndexOutOfBoundsException("Expected ArrayIndexOutOfBoundsException");
     }
 
     static void justThrow2() throws Exception {
-        throw new Exception("Expected Exception");
+        justThrow3();
     }
+
+    static void justThrow3() throws RuntimeException {
+        throw new RuntimeException("Expected RuntimeException");
+    }
+
 }

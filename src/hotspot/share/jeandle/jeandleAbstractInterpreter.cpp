@@ -1785,10 +1785,8 @@ JeandleAbstractInterpreter::DispatchedDest JeandleAbstractInterpreter::dispatch_
   return dispatched;
 }
 
-// TODO: Add real dispatching process using 'instanceof'.
-// As a workaround now, we always choose the first exception handler.
 void JeandleAbstractInterpreter::dispatch_exception_to_handler(llvm::Value* exception_oop) {
-  // Setup all handlers' VM state.
+  // traverse exception handler table
   for (ciExceptionHandlerStream handlers(_method, _bytecodes.cur_bci()); !handlers.is_done(); handlers.next()) {
     ciExceptionHandler* handler = handlers.handler();
     if (!handler->is_rethrow()) {
@@ -1802,12 +1800,13 @@ void JeandleAbstractInterpreter::dispatch_exception_to_handler(llvm::Value* exce
         if (!handler_block->merge_exception_handler_VM_state(
                 _jvm->copy_for_exception_handler(liveness, exception_oop),
                 _ir_builder.GetInsertBlock(), _method)) {
-          JeandleCompilation::report_jeandle_error(
-              "failed to update handler's VM state");
+          JeandleCompilation::report_jeandle_error("failed to update handler's VM state");
+          return;
         }
         _ir_builder.CreateBr(handler_block->header_llvm_block());
         return;
       }
+
       // dispatch
       ciKlass *klass = handler->catch_klass();
       if (klass != nullptr && klass->is_loaded()) {
@@ -1815,19 +1814,22 @@ void JeandleAbstractInterpreter::dispatch_exception_to_handler(llvm::Value* exce
         llvm::PointerType *klass_type = llvm::PointerType::get(*_context, llvm::jeandle::AddrSpace::CHeapAddrSpace);
         llvm::Value *super_klass_addr = _ir_builder.getInt64((intptr_t)super_klass);
         llvm::Value *super_klass_ptr = _ir_builder.CreateIntToPtr(super_klass_addr, klass_type);
+
         // instanceof distinguish
         llvm::CallInst *match = call_java_op("jeandle.instanceof", {super_klass_ptr, exception_oop});
+
         // if match, cur handler is find, else try next
         llvm::BasicBlock *match_dest = handler_block->header_llvm_block();
         llvm::BasicBlock *next_dest = llvm::BasicBlock::Create(*_context,
                                                                 "bci_" + std::to_string(_bytecodes.cur_bci()) + "_exception_dispatch_next",
                                                                 _llvm_func);
+
         MethodLivenessResult liveness = _method->liveness_at_bci(handler_bci);
         if (!handler_block->merge_exception_handler_VM_state(
                 _jvm->copy_for_exception_handler(liveness, exception_oop),  
                 _ir_builder.GetInsertBlock(), _method)) {
-          JeandleCompilation::report_jeandle_error(
-              "failed to update handler's VM state");
+          JeandleCompilation::report_jeandle_error("failed to update handler's VM state");
+          return;
         }
         llvm::Value *cond = _ir_builder.CreateICmpEQ(match, _ir_builder.getInt32(1));
         _ir_builder.CreateCondBr(cond, match_dest, next_dest);
