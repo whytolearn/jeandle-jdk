@@ -1818,7 +1818,7 @@ void JeandleAbstractInterpreter::dispatch_exception_to_handler(llvm::Value* exce
         // instanceof distinguish
         llvm::CallInst *match = call_java_op("jeandle.instanceof", {super_klass_ptr, exception_oop});
 
-        // if match, cur handler is find, else try next
+        // if match, the right handler is found, else try the next
         llvm::BasicBlock *match_dest = handler_block->header_llvm_block();
         llvm::BasicBlock *next_dest = llvm::BasicBlock::Create(*_context,
                                                                 "bci_" + std::to_string(_bytecodes.cur_bci()) + "_exception_dispatch_next",
