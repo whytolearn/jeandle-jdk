@@ -1821,7 +1821,7 @@ void JeandleAbstractInterpreter::dispatch_exception_to_handler(llvm::Value* exce
         // if match, the right handler is found, else try the next
         llvm::BasicBlock *match_dest = handler_block->header_llvm_block();
         llvm::BasicBlock *next_dest = llvm::BasicBlock::Create(*_context,
-                                                                "bci_" + std::to_string(_bytecodes.cur_bci()) + "_exception_dispatch_next",
+                                                                "bci_" + std::to_string(_bytecodes.cur_bci()) + "_exception_dispatch_to_bci_" + std::to_string(handler_block->start_bci()),
                                                                 _llvm_func);
 
         MethodLivenessResult liveness = _method->liveness_at_bci(handler_bci);
