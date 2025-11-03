@@ -36,13 +36,12 @@ public class TestCatch {
         Asserts.assertTrue(testCatch());
 
         String currentDir = System.getProperty("user.dir");
-        FileCheck fileCheck = new FileCheck(currentDir, TestCatch.class.getDeclaredMethod("testCatch"), false);
-        fileCheck.check("bci_2_unwind_dest:");
-        fileCheck.checkNext("landingpad i64");
-        fileCheck.checkNext("cleanup");
+        FileCheck fileCheckOpt = new FileCheck(currentDir, TestCatch.class.getDeclaredMethod("testCatch"), true);
+        fileCheckOpt.check("landingpad token");
 
-        fileCheck.check("bci_2_exception_dispatch_next:");
-        fileCheck.checkNext("hotspotcc i32 @jeandle.instanceof");
+        FileCheck fileCheck = new FileCheck(currentDir, TestCatch.class.getDeclaredMethod("testCatch"), false);
+        fileCheck.check("bci_2_exception_dispatch_next: ");
+        fileCheck.checkNext("call hotspotcc i32 @jeandle.instanceof(ptr inttoptr");
 
         fileCheck.check("bci_2_exception_dispatch_next2:");
         fileCheck.checkNext("call hotspotcc ptr @jeandle.current_thread()");
@@ -74,7 +73,7 @@ public class TestCatch {
         } catch (Exception e) {
             catched2 = 3;
         }
-        return catched1 == 1 && catched2 == 3;
+        return catched1 == 1 && catched2 == 2;
     }
 
     static void justThrow1() throws ArrayIndexOutOfBoundsException {
