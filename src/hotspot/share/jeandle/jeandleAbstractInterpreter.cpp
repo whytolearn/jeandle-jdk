@@ -1796,9 +1796,8 @@ void JeandleAbstractInterpreter::dispatch_exception_to_handler(llvm::Value* exce
 
       // catch_all
       if (handler->is_catch_all()) {
-        MethodLivenessResult liveness = _method->liveness_at_bci(handler_bci);
-        if (!handler_block->merge_exception_handler_VM_state(
-                _jvm->copy_for_exception_handler(liveness, exception_oop),
+        if (!handler_block->merge_VM_state_from(
+                _jvm->copy_for_exception_handler(exception_oop),
                 _ir_builder.GetInsertBlock(), _method)) {
           JeandleCompilation::report_jeandle_error("failed to update handler's VM state");
           return;
@@ -1824,9 +1823,8 @@ void JeandleAbstractInterpreter::dispatch_exception_to_handler(llvm::Value* exce
                                                                 "bci_" + std::to_string(_bytecodes.cur_bci()) + "_exception_dispatch_to_bci_" + std::to_string(handler_block->start_bci()),
                                                                 _llvm_func);
 
-        MethodLivenessResult liveness = _method->liveness_at_bci(handler_bci);
-        if (!handler_block->merge_exception_handler_VM_state(
-                _jvm->copy_for_exception_handler(liveness, exception_oop),  
+        if (!handler_block->merge_VM_state_from(
+                _jvm->copy_for_exception_handler(exception_oop),  
                 _ir_builder.GetInsertBlock(), _method)) {
           JeandleCompilation::report_jeandle_error("failed to update handler's VM state");
           return;

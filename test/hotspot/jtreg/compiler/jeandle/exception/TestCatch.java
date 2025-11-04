@@ -36,20 +36,19 @@ public class TestCatch {
         Asserts.assertTrue(testCatch());
 
         String currentDir = System.getProperty("user.dir");
-        System.out.println("DIR:  " + currentDir);
         FileCheck fileCheckOpt = new FileCheck(currentDir, TestCatch.class.getDeclaredMethod("testCatch"), true);
         fileCheckOpt.check("landingpad token");
 
         FileCheck fileCheck = new FileCheck(currentDir, TestCatch.class.getDeclaredMethod("testCatch"), false);
-        fileCheck.check("bci_2_exception_dispatch_next: ");
-        fileCheck.checkNext("call hotspotcc i32 @jeandle.instanceof(ptr inttoptr");
+        fileCheck.check("bci_2_exception_dispatch_to_bci_52:");
+        fileCheck.checkNext("call hotspotcc i32 @jeandle.instanceof");
 
-        fileCheck.check("bci_2_exception_dispatch_next2:");
-        fileCheck.checkNext("call hotspotcc ptr @jeandle.current_thread()");
-        fileCheck.checkNext("call hotspotcc void @install_exceptional_return");
+        fileCheck.check("bci_446_unwind_dest:");
+        fileCheck.checkNext("landingpad i64");
+        fileCheck.checkNext("cleanup");
 
-        FileCheck fileCheckOpt = new FileCheck(currentDir, TestCatch.class.getDeclaredMethod("testCatch"), true);
-        fileCheckOpt.check("landingpad token");
+        fileCheck.check("call hotspotcc void @install_exceptional_return");
+
     }
 
     static boolean testCatch() {
