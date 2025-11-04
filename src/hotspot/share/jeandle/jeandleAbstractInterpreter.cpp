@@ -1807,7 +1807,7 @@ void JeandleAbstractInterpreter::dispatch_exception_to_handler(llvm::Value* exce
       }
 
       // dispatch
-      ciKlass *klass = handler->catch_klass();
+      ciKlass* klass = handler->catch_klass();
       if (klass != nullptr && klass->is_loaded()) {
         Klass *super_klass = (Klass *)(klass->constant_encoding());
         llvm::PointerType *klass_type = llvm::PointerType::get(*_context, llvm::jeandle::AddrSpace::CHeapAddrSpace);
