@@ -36,6 +36,7 @@ public class TestCatch {
         Asserts.assertTrue(testCatch());
 
         String currentDir = System.getProperty("user.dir");
+        System.out.println("DIR:  " + currentDir);
         FileCheck fileCheckOpt = new FileCheck(currentDir, TestCatch.class.getDeclaredMethod("testCatch"), true);
         fileCheckOpt.check("landingpad token");
 
@@ -57,10 +58,33 @@ public class TestCatch {
             justThrow1();
         } catch (ArrayIndexOutOfBoundsException e) {
             catched1 = 1;
+            for (int i = 0; i < 10; i++) {
+                int handelr = -i;
+                try {
+                    justThrow3();
+                } catch (RuntimeException e1) {
+                    handelr = i;
+                } catch (Exception e2) {
+                    handelr = 2 * i;
+                } finally {
+                    handelr *= 10;
+                }
+                Asserts.assertEquals(handelr, 10 * i);
+            }
         } catch (RuntimeException e) {
             catched1 = 2;
         } catch (Exception e) {
             catched1 = 3;
+        } finally {
+            int handelr = 1;
+            try {
+                justThrow1();
+            } catch (ArrayIndexOutOfBoundsException e) {
+                handelr = 2;
+            } finally {
+                handelr *= 10;
+            }
+            Asserts.assertEquals(handelr, 20);
         }
 
         int catched2 = 0;
@@ -71,9 +95,22 @@ public class TestCatch {
         } catch (RuntimeException e) {
             catched2 = 2;
         } catch (Exception e) {
+            for (int i = 0; i < 10; i++) {
+                int handelr = -i;
+                try {
+                    justThrow2();
+                } catch (RuntimeException e1) {
+                    handelr = i;
+                } catch (Exception e2) {
+                    handelr = 2 * i;
+                } finally {
+                    handelr *= 10;
+                }
+                Asserts.assertEquals(handelr, 20 * i);
+            }
             catched2 = 3;
         }
-        return catched1 == 1 && catched2 == 2;
+        return catched1 == 1 && catched2 == 3;
     }
 
     static void justThrow1() throws ArrayIndexOutOfBoundsException {
@@ -81,11 +118,10 @@ public class TestCatch {
     }
 
     static void justThrow2() throws Exception {
-        justThrow3();
+        throw new Exception("Expected Exception");
     }
 
     static void justThrow3() throws RuntimeException {
         throw new RuntimeException("Expected RuntimeException");
     }
-
 }
