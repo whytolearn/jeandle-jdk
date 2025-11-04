@@ -62,13 +62,13 @@ public class TestCatch {
                 try {
                     justThrow3();
                 } catch (RuntimeException e1) {
-                    handelr = i;
+                    handler = i;
                 } catch (Exception e2) {
-                    handelr = 2 * i;
+                    handler = 2 * i;
                 } finally {
-                    handelr *= 10;
+                    handler *= 10;
                 }
-                Asserts.assertEquals(handelr, 10 * i);
+                Asserts.assertEquals(handler, 10 * i);
             }
         } catch (RuntimeException e) {
             catched1 = 2;
@@ -79,11 +79,11 @@ public class TestCatch {
             try {
                 justThrow1();
             } catch (ArrayIndexOutOfBoundsException e) {
-                handelr = 2;
+                handler = 2;
             } finally {
-                handelr *= 10;
+                handler *= 10;
             }
-            Asserts.assertEquals(handelr, 20);
+            Asserts.assertEquals(handler, 20);
         }
 
         int catched2 = 0;
@@ -99,13 +99,13 @@ public class TestCatch {
                 try {
                     justThrow2();
                 } catch (RuntimeException e1) {
-                    handelr = i;
+                    handler = i;
                 } catch (Exception e2) {
-                    handelr = 2 * i;
+                    handler = 2 * i;
                 } finally {
-                    handelr *= 10;
+                    handler *= 10;
                 }
-                Asserts.assertEquals(handelr, 20 * i);
+                Asserts.assertEquals(handler, 20 * i);
             }
             catched2 = 3;
         }
