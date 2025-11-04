@@ -1433,7 +1433,7 @@ llvm::Value* JeandleAbstractInterpreter::find_or_insert_oop(ciObject* oop) {
   if (llvm::Value* global_oop_handle = _oops.lookup(oop_handle)) {
     return global_oop_handle;
   }
-  llvm::StringRef oop_name = next_oop_name();
+  std::string oop_name = next_oop_name();
   _compiled_code.oop_handles()[oop_name] = oop_handle;
   llvm::Value* global = _module.getOrInsertGlobal(
                                oop_name,
@@ -1785,36 +1785,53 @@ JeandleAbstractInterpreter::DispatchedDest JeandleAbstractInterpreter::dispatch_
   return dispatched;
 }
 
-// TODO: Add real dispatching process using 'instanceof'.
-// As a workaround now, we always choose the first exception handler.
 void JeandleAbstractInterpreter::dispatch_exception_to_handler(llvm::Value* exception_oop) {
-  // Setup all handlers' VM state.
+  // traverse exception handler table
   for (ciExceptionHandlerStream handlers(_method, _bytecodes.cur_bci()); !handlers.is_done(); handlers.next()) {
     ciExceptionHandler* handler = handlers.handler();
-    if (!handler->is_rethrow()) {
-      int handler_bci = handler->handler_bci();
-      JeandleBasicBlock* handler_block = bci2block()[handler_bci];
-      assert(handler_block != nullptr, "invalid handler block");
+    if (handler->is_rethrow()) {
+      throw_exception(exception_oop);
+      return;
+    }
+    int handler_bci = handler->handler_bci();
+    JeandleBasicBlock* handler_block = bci2block()[handler_bci];
+    assert(handler_block != nullptr, "invalid handler block");
+
+    // catch_all
+    if (handler->is_catch_all()) {
       if (!handler_block->merge_VM_state_from(_jvm->copy_for_exception_handler(exception_oop), _ir_builder.GetInsertBlock(), _method)) {
         JeandleCompilation::report_jeandle_error("failed to update handler's VM state");
+        return;
       }
-    }
-  }
-
-  // Choose the first handler. (workaround)
-  ciExceptionHandlerStream handlers(_method, _bytecodes.cur_bci());
-  if (!handlers.is_done()) {
-    ciExceptionHandler* handler = handlers.handler();
-    if (handler->is_rethrow()) {
-      // Rethrow it.
-      throw_exception(exception_oop);
-    } else {
-      int handler_bci = handler->handler_bci();
-      JeandleBasicBlock* handler_block = bci2block()[handler_bci];
-      assert(handler_block != nullptr, "invalid handler block");
       _ir_builder.CreateBr(handler_block->header_llvm_block());
+      return;
     }
-    return;
+
+    // dispatch
+    ciKlass* klass = handler->catch_klass();
+    if (klass != nullptr && klass->is_loaded()) {
+      Klass* super_klass = (Klass*)(klass->constant_encoding());
+      llvm::PointerType* klass_type = llvm::PointerType::get(*_context, llvm::jeandle::AddrSpace::CHeapAddrSpace);
+      llvm::Value* super_klass_addr = _ir_builder.getInt64((intptr_t)super_klass);
+      llvm::Value* super_klass_ptr = _ir_builder.CreateIntToPtr(super_klass_addr, klass_type);
+
+      // instanceof distinguish
+      llvm::CallInst* match = call_java_op("jeandle.instanceof", {super_klass_ptr, exception_oop});
+
+      // if match, the right handler is found, else try the next
+      llvm::BasicBlock* match_dest = handler_block->header_llvm_block();
+      llvm::BasicBlock* next_dest = llvm::BasicBlock::Create(*_context, 
+                                                             "bci_" + std::to_string(_bytecodes.cur_bci()) + "_exception_dispatch_to_bci_" + std::to_string(handler_block->start_bci()),
+                                                             _llvm_func);
+
+      if (!handler_block->merge_VM_state_from(_jvm->copy_for_exception_handler(exception_oop), _ir_builder.GetInsertBlock(), _method)) {
+        JeandleCompilation::report_jeandle_error("failed to update handler's VM state");
+        return;
+      }
+      llvm::Value* cond = _ir_builder.CreateICmpEQ(match, _ir_builder.getInt32(1));
+      _ir_builder.CreateCondBr(cond, match_dest, next_dest);
+      _ir_builder.SetInsertPoint(next_dest);
+    }
   }
 
   // At least one handler is found.
