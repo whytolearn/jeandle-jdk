@@ -95,7 +95,7 @@ public class TestCatch {
             catched2 = 2;
         } catch (Exception e) {
             for (int i = 0; i < 10; i++) {
-                int handelr = -i;
+                int handler = -i;
                 try {
                     justThrow2();
                 } catch (RuntimeException e1) {
