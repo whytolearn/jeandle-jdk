@@ -1785,7 +1785,7 @@ JeandleAbstractInterpreter::DispatchedDest JeandleAbstractInterpreter::dispatch_
   return dispatched;
 }
 
-void JeandleAbstractInterpreter::dispatch_exception_to_handler(llvm::Value *exception_oop) {
+void JeandleAbstractInterpreter::dispatch_exception_to_handler(llvm::Value* exception_oop) {
   // traverse exception handler table
   for (ciExceptionHandlerStream handlers(_method, _bytecodes.cur_bci()); !handlers.is_done(); handlers.next()) {
     ciExceptionHandler* handler = handlers.handler();
