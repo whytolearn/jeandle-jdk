@@ -58,7 +58,7 @@ public class TestCatch {
         } catch (ArrayIndexOutOfBoundsException e) {
             catched1 = 1;
             for (int i = 0; i < 10; i++) {
-                int handelr = -i;
+                int handler = -i;
                 try {
                     justThrow3();
                 } catch (RuntimeException e1) {
