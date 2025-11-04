@@ -75,7 +75,7 @@ public class TestCatch {
         } catch (Exception e) {
             catched1 = 3;
         } finally {
-            int handelr = 1;
+            int handler = 1;
             try {
                 justThrow1();
             } catch (ArrayIndexOutOfBoundsException e) {
